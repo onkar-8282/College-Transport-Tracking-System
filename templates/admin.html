@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel - College Bus Tracking System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f3f6fb;
+    }
+
+    header {
+      background: #004aad;
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1000px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #004aad;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+
+    button {
+      background: #004aad;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #003580;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #004aad;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    .delete-btn {
+      background: red;
+      padding: 5px 10px;
+      border-radius: 5px;
+      color: white;
+      text-decoration: none;
+    }
+
+    .delete-btn:hover {
+      background: darkred;
+    }
+
+    footer {
+      text-align: center;
+      margin: 20px;
+      font-size: 13px;
+      color: #777;
+    }
+  </style>
+  <script>
+    // Auto-refresh bus list every 10 seconds
+    setInterval(() => {
+      fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const newDoc = parser.parseFromString(html, 'text/html');
+          const newTable = newDoc.querySelector('table');
+          document.querySelector('table').innerHTML = newTable.innerHTML;
+        });
+    }, 10000);
+  </script>
+</head>
+<body>
+  <header>🚌 Admin Panel - College Transport Tracking</header>
+
+  <div class="container">
+    <h2>Add or Edit Bus Details</h2>
+    <form method="POST">
+      <input type="text" name="bus_no" placeholder="Bus Number" required>
+      <input type="text" name="route" placeholder="Route (e.g. Titwala - Kalyan)" required>
+      <input type="text" name="driver" placeholder="Driver Name" required>
+      <input type="time" name="departure_time" required>
+      <input type="time" name="arrival_time" required>
+      <button type="submit">Save Bus</button>
+    </form>
+
+    <h2>Current Buses</h2>
+    <table>
+      <tr>
+        <th>Bus No</th>
+        <th>Route</th>
+        <th>Driver</th>
+        <th>Departure</th>
+        <th>Arrival</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+      {% for bus in buses %}
+      <tr>
+        <td>{{ bus.bus_no }}</td>
+        <td>{{ bus.route }}</td>
+        <td>{{ bus.driver }}</td>
+        <td>{{ bus.departure_time }}</td>
+        <td>{{ bus.arrival_time }}</td>
+        <td>{{ bus.status }}</td>
+        <td><a href="{{ url_for('delete_bus', bus_no=bus.bus_no) }}" class="delete-btn">Delete</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <a href="{{ url_for('logout') }}" style="display:block;text-align:center;margin-top:20px;color:#004aad;font-weight:bold;text-decoration:none;">🚪 Logout</a>
+  </div>
+
+</body>
+</html>

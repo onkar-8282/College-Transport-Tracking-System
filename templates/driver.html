@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Driver Panel - College Transport Tracking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f7f7f7;
+      margin: 0;
+    }
+    h2 {
+      background: #004aad;
+      color: white;
+      padding: 10px;
+      margin: 0;
+    }
+    form, .info-box {
+      background: white;
+      border-radius: 10px;
+      width: 90%;
+      margin: 20px auto;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    select, input, button {
+      padding: 8px;
+      margin: 5px;
+      width: 80%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #004aad;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #00337a;
+    }
+    .status {
+      font-weight: bold;
+      color: #006400;
+    }
+  </style>
+</head>
+<body>
+  <h2>🚖 Driver Panel</h2>
+  <a href="/logout">Logout</a>
+
+  <form id="driverForm" method="POST">
+    <h3>Update Bus Location</h3>
+    <label>Select Your Bus:</label><br>
+    <select name="bus_no" id="bus_no" required>
+      {% for bus in buses %}
+        <option value="{{ bus.bus_no }}">{{ bus.bus_no }} - {{ bus.route }}</option>
+      {% endfor %}
+    </select><br>
+
+    <label>Status:</label><br>
+    <select name="status" id="status">
+      <option value="Idle">Idle</option>
+      <option value="Running">Running</option>
+      <option value="Completed">Completed</option>
+    </select><br>
+
+    <button type="button" onclick="startTrip()">Start Trip</button>
+    <button type="button" onclick="endTrip()">End Trip</button>
+  </form>
+
+  <div class="info-box">
+    <h3>Live Location Update</h3>
+    <p>Latitude: <span id="lat">--</span></p>
+    <p>Longitude: <span id="lon">--</span></p>
+    <p>Status: <span class="status" id="tripStatus">Not Started</span></p>
+  </div>
+
+<script>
+let watchId = null;
+let currentBus = document.getElementById("bus_no");
+let currentStatus = "Idle";
+
+// Start Trip
+function startTrip() {
+  currentStatus = "Running";
+  document.getElementById("tripStatus").innerText = "Running...";
+  if (navigator.geolocation) {
+    watchId = navigator.geolocation.watchPosition(sendLocation, showError, {
+      enableHighAccuracy: true, maximumAge: 0, timeout: 5000
+    });
+  } else {
+    alert("Geolocation is not supported by this browser.");
+  }
+}
+
+// End Trip
+function endTrip() {
+  currentStatus = "Completed";
+  document.getElementById("tripStatus").innerText = "Trip Completed";
+  if (watchId) navigator.geolocation.clearWatch(watchId);
+  sendLocationOnce();
+}
+
+// Send Live Location
+function sendLocation(position) {
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+  document.getElementById("lat").innerText = lat.toFixed(5);
+  document.getElementById("lon").innerText = lon.toFixed(5);
+
+  fetch("/driver", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      bus_no: currentBus.value,
+      latitude: lat,
+      longitude: lon,
+      status: currentStatus
+    })
+  });
+}
+
+// Send Location Once
+function sendLocationOnce() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      sendLocation(pos);
+    });
+  }
+}
+
+// Error handler
+function showError(error) {
+  switch(error.code) {
+    case error.PERMISSION_DENIED:
+      alert("Please enable GPS permission.");
+      break;
+    case error.POSITION_UNAVAILABLE:
+      alert("Location info unavailable.");
+      break;
+    case error.TIMEOUT:
+      alert("Location request timed out.");
+      break;
+  }
+}
+</script>
+</body>
+</html>

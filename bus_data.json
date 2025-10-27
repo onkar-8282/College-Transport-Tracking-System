@@ -1,0 +1,24 @@
+{
+  "buses": [
+    {
+      "bus_no": "101",
+      "route": "Titwala - College",
+      "driver": "Ramesh",
+      "latitude": 19.299000,
+      "longitude": 73.223839,
+      "status": "Idle",
+      "departure_time": "08:00 AM",
+      "arrival_time": "09:00 AM"
+    },
+    {
+      "bus_no": "102",
+      "route": "Kalyan - College",
+      "driver": "Suresh",
+      "latitude": 19.2403,
+      "longitude": 73.1305,
+      "status": "On Trip",
+      "departure_time": "08:15 AM",
+      "arrival_time": "09:10 AM"
+    }
+  ]
+}

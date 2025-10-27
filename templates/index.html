@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>College Bus Tracking System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body { font-family: Arial; text-align: center; background: #f5f5f5; margin: 0; }
+    h2 { background: #004aad; color: white; padding: 10px; margin: 0; }
+    #map { height: 500px; width: 95%; margin: 10px auto; border-radius: 10px; border: 2px solid #ccc; }
+    .info-box { width: 95%; margin: 10px auto; background: white; padding: 10px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    select, button { padding: 6px; margin: 5px; }
+    table { width: 95%; margin: 10px auto; border-collapse: collapse; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h2>🚍 College Bus Tracking System (Titwala)</h2>
+
+  <div class="info-box">
+    <label for="busFilter">🔍 Select Bus:</label>
+    <select id="busFilter" onchange="filterBus()">
+      <option value="all">All Buses</option>
+    </select>
+  </div>
+
+  <div id="map"></div>
+
+  <h3>🕒 Bus Timings</h3>
+  <table id="busTable">
+    <tr>
+      <th>Bus No</th>
+      <th>Route</th>
+      <th>Driver</th>
+      <th>Departure</th>
+      <th>Arrival</th>
+      <th>Status</th>
+    </tr>
+  </table>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([19.2579, 73.2007], 13); // Titwala
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let busMarkers = {};
+    let allBusData = [];
+    let currentFilter = "all";  // store selected bus
+
+    async function loadBuses() {
+      const res = await fetch('/location_data');
+      const data = await res.json();
+      allBusData = data.buses;
+      updateFilterOptions();
+      updateMarkers();
+      updateTable();
+    }
+
+    function updateFilterOptions() {
+      const dropdown = document.getElementById("busFilter");
+      const selected = currentFilter; // remember current selection
+      const buses = allBusData.map(b => b.bus_no);
+
+      // build dropdown only if changed
+      const currentOptions = Array.from(dropdown.options).map(o => o.value);
+      if (JSON.stringify(currentOptions.sort()) !== JSON.stringify(["all", ...buses].sort())) {
+        dropdown.innerHTML = '<option value="all">All Buses</option>';
+        buses.forEach(bus => {
+          const opt = document.createElement("option");
+          opt.value = bus;
+          opt.textContent = bus;
+          dropdown.appendChild(opt);
+        });
+      }
+      dropdown.value = selected;
+    }
+
+    function updateMarkers() {
+      const filter = currentFilter;
+      allBusData.forEach(bus => {
+        if (filter !== "all" && bus.bus_no !== filter) {
+          if (busMarkers[bus.bus_no]) {
+            map.removeLayer(busMarkers[bus.bus_no]);
+            delete busMarkers[bus.bus_no];
+          }
+          return;
+        }
+        if (!busMarkers[bus.bus_no]) {
+          const marker = L.marker([bus.latitude, bus.longitude]).addTo(map);
+          marker.bindPopup(`<b>${bus.bus_no}</b><br>${bus.route}<br>Driver: ${bus.driver}`);
+          busMarkers[bus.bus_no] = marker;
+        } else {
+          busMarkers[bus.bus_no].setLatLng([bus.latitude, bus.longitude]);
+          busMarkers[bus.bus_no].getPopup().setContent(`<b>${bus.bus_no}</b><br>${bus.route}<br>Driver: ${bus.driver}`);
+        }
+      });
+    }
+
+    function updateTable() {
+      const table = document.getElementById("busTable");
+      table.innerHTML = `<tr>
+        <th>Bus No</th><th>Route</th><th>Driver</th>
+        <th>Departure</th><th>Arrival</th><th>Status</th></tr>`;
+
+      const filter = currentFilter;
+      const buses = filter === "all" ? allBusData : allBusData.filter(b => b.bus_no === filter);
+      buses.forEach(bus => {
+        const row = `<tr>
+          <td>${bus.bus_no}</td>
+          <td>${bus.route}</td>
+          <td>${bus.driver}</td>
+          <td>${bus.departure_time}</td>
+          <td>${bus.arrival_time}</td>
+          <td>${bus.status}</td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    function filterBus() {
+      currentFilter = document.getElementById("busFilter").value;
+      updateMarkers();
+      updateTable();
+    }
+
+    setInterval(loadBuses, 5000);
+    loadBuses();
+  </script>
+</body>
+</html>

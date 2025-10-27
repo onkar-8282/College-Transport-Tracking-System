@@ -1,0 +1,22 @@
+{
+  "admin": {
+    "username": "admin",
+    "password": "admin123",
+    "role": "admin"
+  },
+  "driver1": {
+    "username": "driver1",
+    "password": "driver123",
+    "role": "driver"
+  },
+  "null": {
+    "username": "driver2",
+    "password": "driver456",
+    "role": "driver"
+  },
+  "null": {
+    "username": "driver3",
+    "password": "driver789",
+    "role": "driver"
+  }
+}
